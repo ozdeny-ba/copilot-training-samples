@@ -1,6 +1,44 @@
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
+const USERNAME_PATTERN = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{5,}$/;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const usernameInput = document.getElementById('username');
+    const feedback = document.getElementById('username-feedback');
+
+    function validateUsername() {
+        const valid = USERNAME_PATTERN.test(usernameInput.value);
+        usernameInput.classList.toggle('is-invalid', !valid);
+        usernameInput.classList.toggle('is-valid', valid);
+        feedback.classList.toggle('d-none', valid);
+    }
+
+    const successMsg = document.getElementById('username-success');
+
+    function showResult(valid) {
+        feedback.classList.toggle('d-none', valid);
+        successMsg.classList.toggle('d-none', !valid);
+        if (valid) {
+            successMsg.textContent = `Username "${usernameInput.value}" accepted! Welcome.`;
+        }
+    }
+
+    usernameInput.addEventListener('input', () => {
+        validateUsername();
+        // Hide result messages while the user is still typing
+        successMsg.classList.add('d-none');
+    });
+    usernameInput.addEventListener('blur', validateUsername);
+
+    document.getElementById('username-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const valid = USERNAME_PATTERN.test(usernameInput.value);
+        validateUsername();
+        showResult(valid);
+    });
+});
+
 let budgetChart = null;
 
 function getChartData() {
@@ -72,3 +110,21 @@ document.getElementById('updateChartBtn').addEventListener('click', () => {
     const chartTab = document.getElementById('chart-tab');
     bootstrap.Tab.getOrCreateInstance(chartTab).show();
 });
+
+document.getElementById('downloadChartBtn').addEventListener('click', () => {
+    if (!budgetChart) {
+        alert('Please generate the chart first by clicking "Update Chart".');
+        return;
+    }
+
+    const imageUrl = budgetChart.toBase64Image('image/png', 1);
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = 'bucks2bar-chart.png';
+    link.click();
+});
+
+// Export for testing (Node.js / Jest)
+if (typeof module !== 'undefined') {
+    module.exports = { USERNAME_PATTERN, MONTH_KEYS, MONTHS, getChartData };
+}
